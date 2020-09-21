@@ -3,8 +3,12 @@
  */
 package com.globomantics.productservice.web;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +37,19 @@ public class ProductController {
 
 	@GetMapping("/product/{id}")
     public ResponseEntity<?> getProduct(@PathVariable Integer id) {
-		return null;
+		 return productService.findById(id)
+	                .map(product -> {
+	                    try {
+	                        return ResponseEntity
+	                                .ok()
+	                                .eTag(Integer.toString(product.getVersion()))
+	                                .location(new URI("/product/" + product.getId()))
+	                                .body(product);
+	                    } catch (URISyntaxException e ) {
+	                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+	                    }
+	                })
+	                .orElse(ResponseEntity.notFound().build());
 		
 	}
 	
