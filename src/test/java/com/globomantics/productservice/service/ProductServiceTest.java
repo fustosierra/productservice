@@ -1,5 +1,6 @@
 package com.globomantics.productservice.service;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.util.Optional;
@@ -63,6 +64,19 @@ public class ProductServiceTest {
 
         // Assert the response
         Assertions.assertFalse(returnedProduct.isPresent(), "Product was found, when it shouldn't be");
+    }
+    
+    @Test
+    @DisplayName("Test save product")
+    void testSave() {
+        Product mockProduct = new Product(1, "Product Name", 10);
+        doReturn(mockProduct).when(repository).save(any());
+
+        Product returnedProduct = service.save(mockProduct);
+
+        Assertions.assertNotNull(returnedProduct, "The saved product should not be null");
+        Assertions.assertEquals(1, returnedProduct.getVersion().intValue(),
+                "The version for a new product should be 1");
     }
 
 

@@ -1,6 +1,8 @@
 package com.globomantics.productservice.repository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.sql.DataSource;
@@ -73,7 +75,22 @@ public class ProductRepositoryImpl implements ProductRepository {
 	@Override
 	public Product save(Product product) {
 		// TODO Auto-generated method stub
-		return null;
+		// Build the product parameters we want to save
+        Map<String, Object> parameters = new HashMap<>(1);
+        parameters.put("name", product.getName());
+        parameters.put("quantity", product.getQuantity());
+        parameters.put("version", product.getVersion());
+
+        // Execute the query and get the generated key
+        Number newId = simpleJdbcInsert.executeAndReturnKey(parameters);
+
+        logger.info("Inserting product into database, generated key is: {}", newId);
+
+        // Update the product's ID with the new key
+        product.setId((Integer)newId);
+
+        // Return the complete product
+        return product;
 	}
 
 	@Override
