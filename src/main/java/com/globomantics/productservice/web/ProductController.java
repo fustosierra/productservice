@@ -5,6 +5,7 @@ package com.globomantics.productservice.web;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -108,7 +109,46 @@ public class ProductController {
     public ResponseEntity<?> updateProduct(@RequestBody Product product,
                                            @PathVariable Integer id,
                                            @RequestHeader("If-Match") Integer ifMatch) {
-											return null;
+		logger.info("Updating product with id: {}, name: {}, quantity: {}",
+                id, product.getName(), product.getQuantity());
+
+        // Get the existing product
+        Optional<Product> existingProduct = productService.findById(id);
+
+        return existingProduct.map(p -> {
+           logger.info("Product with ID: " + id + " has a version of " + p.getVersion()
+             // Compare the etags
+                    + ". Update is for If-Match: " + ifMatch);
+            if (!p.getVersion().equals(ifMatch)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            }
+
+            // Update the product
+            p.setName(product.getName());
+            p.setQuantity(product.getQuantity());
+            p.setVersion(p.getVersion() + 1);
+
+            logger.info("Updating product with ID: " + p.getId()
+                    + " -> name=" + p.getName()
+                    + ", quantity=" + p.getQuantity()
+                    + ", version=" + p.getVersion());
+
+            try {
+                // Update the product and return an ok response
+                if (productService.update(p)) {
+                    return ResponseEntity.ok()
+                            .location(new URI("/product/" + p.getId()))
+                            .eTag(Integer.toString(p.getVersion()))
+                            .body(p);
+                } else {
+                    return ResponseEntity.notFound().build();
+                }
+            } catch (URISyntaxException e) {
+                // An error occurred trying to create the location URI, return an error
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+
+        }).orElse(ResponseEntity.notFound().build());
 		
 	}
     
@@ -123,10 +163,18 @@ public class ProductController {
      */
 	@DeleteMapping("/product/{id}")
     public ResponseEntity<?> deleteProduct(@PathVariable Integer id) {
-		return null;
-		
-	}
-	
-	    
 
+        logger.info("Deleting product with ID {}", id);
+
+        // Get the existing product
+        Optional<Product> existingProduct = productService.findById(id);
+
+        return existingProduct.map(p -> {
+            if (productService.delete(p.getId())) {
+                return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }).orElse(ResponseEntity.notFound().build());
+    }
 }

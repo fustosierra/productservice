@@ -3,6 +3,7 @@ package com.globomantics.productservice.web;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -121,7 +122,7 @@ public class ProductControllerTest {
 
                 // Validate the response code and content type
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
 
                 // Validate the headers
                 .andExpect(header().string(HttpHeaders.ETAG, "\"2\""))
@@ -166,6 +167,32 @@ public class ProductControllerTest {
 
                 // Validate the response code and content type
                 .andExpect(status().isNotFound());
+    }
+    
+    @Test
+    @DisplayName("DELETE /product/1 - Not Found")
+    void testProductDeleteNotFound() throws Exception {
+        // Setup the mocked service
+        doReturn(Optional.empty()).when(service).findById(1);
+
+        // Execute our DELETE request
+        mockMvc.perform(delete("/product/{id}", 1))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("DELETE /product/1 - Failure")
+    void testProductDeleteFailure() throws Exception {
+        // Setup mocked product
+        Product mockProduct = new Product(1, "Product Name", 10, 1);
+
+        // Setup the mocked service
+        doReturn(Optional.of(mockProduct)).when(service).findById(1);
+        doReturn(false).when(service).delete(1);
+
+        // Execute our DELETE request
+        mockMvc.perform(delete("/product/{id}", 1))
+                .andExpect(status().isInternalServerError());
     }
 	
 	static String asJsonString(final Object obj) {
