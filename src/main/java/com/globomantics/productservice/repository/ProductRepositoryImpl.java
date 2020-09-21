@@ -1,5 +1,6 @@
 package com.globomantics.productservice.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.sql.DataSource;
@@ -47,6 +48,38 @@ public class ProductRepositoryImpl implements ProductRepository {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+	}
+
+	@Override
+	public List<Product> findAll() {
+		// TODO Auto-generated method stub
+		return jdbcTemplate.query("SELECT * FROM products",
+                (rs, rowNumber) -> {
+                    Product product = new Product();
+                    product.setId(rs.getInt("id"));
+                    product.setName(rs.getString("name"));
+                    product.setQuantity(rs.getInt("quantity"));
+                    product.setVersion(rs.getInt("version"));
+                    return product;
+                });
+	}
+
+	@Override
+	public boolean update(Product product) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Product save(Product product) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean delete(Integer id) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

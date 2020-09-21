@@ -60,5 +60,16 @@ public class ProductRepositoryTest {
         // Validate that we found it
         Assertions.assertFalse(product.isPresent(), "Product with ID 3 should be not be found");
     }
+    
+    @Test
+    @DataSet("products.yml")
+    void testFindAll() {
+        List<Product> products = repository.findAll();
+        Assertions.assertEquals(2, products.size(), "We should have 2 products in our database");
+    }
+    
+    
+    
+    
 
 }
