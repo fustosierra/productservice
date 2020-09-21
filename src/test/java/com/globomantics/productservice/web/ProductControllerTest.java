@@ -1,8 +1,10 @@
 package com.globomantics.productservice.web;
 
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -22,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.globomantics.productservice.model.Product;
 import com.globomantics.productservice.service.ProductService;
 
@@ -72,6 +75,43 @@ public class ProductControllerTest {
 
                 // Validate that we get a 404 Not Found response
                 .andExpect(status().isNotFound());
+    }
+	
+	@Test
+    @DisplayName("POST /product - Success")
+    void testCreateProduct() throws Exception {
+        // Setup mocked service
+        Product postProduct = new Product("Product Name", 10);
+        Product mockProduct = new Product(1, "Product Name", 10, 1);
+        doReturn(mockProduct).when(service).save(any());
+
+        mockMvc.perform(post("/product")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(asJsonString(postProduct)))
+
+                // Validate the response code and content type
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+
+                // Validate the headers
+                .andExpect(header().string(HttpHeaders.ETAG, "\"1\""))
+                .andExpect(header().string(HttpHeaders.LOCATION, "/product/1"))
+
+                // Validate the returned fields
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.name", is("Product Name")))
+                .andExpect(jsonPath("$.quantity", is(10)))
+                .andExpect(jsonPath("$.version", is(1)));
+    }
+	
+	
+	
+	static String asJsonString(final Object obj) {
+        try {
+            return new ObjectMapper().writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

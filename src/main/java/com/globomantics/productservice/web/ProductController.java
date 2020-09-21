@@ -78,8 +78,20 @@ public class ProductController {
      */
 	@PostMapping("/product")
     public ResponseEntity<Product> createProduct(@RequestBody Product product) {
-		return null;
-    	
+		logger.info("Creating new product with name: {}, quantity: {}", product.getName(), product.getQuantity());
+
+        // Create the new product
+        Product newProduct = productService.save(product);
+
+        try {
+            // Build a created response
+            return ResponseEntity
+                    .created(new URI("/product/" + newProduct.getId()))
+                    .eTag(Integer.toString(newProduct.getVersion()))
+                    .body(newProduct);
+        } catch (URISyntaxException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }    	
     }
     
 	 /**
